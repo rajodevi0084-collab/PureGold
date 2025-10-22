@@ -1,0 +1,119 @@
+data:
+  path: "data/predictive/latest.parquet"
+  timestamp_column: "timestamp"
+  symbol_column: "symbol"
+  target:
+    name: "future_return_1d"
+    kind: "future_return"
+    source: "close"
+    horizon: 1
+
+feature_sets:
+  basic_price:
+    description: "Core price action and liquidity features."
+    features:
+      - kind: "pct_change"
+        source: "close"
+        periods: 1
+        rename: "return_1d"
+      - kind: "pct_change"
+        source: "close"
+        periods: 5
+        rename: "return_5d"
+      - kind: "rolling_mean"
+        source: "close"
+        window: 5
+        rename: "ma_close_5"
+      - kind: "rolling_mean"
+        source: "close"
+        window: 20
+        rename: "ma_close_20"
+      - kind: "rolling_std"
+        source: "close"
+        window: 20
+        rename: "vol_close_20"
+      - kind: "rolling_zscore"
+        source: "close"
+        window: 20
+        rename: "zscore_close_20"
+      - kind: "rolling_mean"
+        source: "volume"
+        window: 10
+        rename: "ma_volume_10"
+      - kind: "rolling_std"
+        source: "volume"
+        window: 10
+        rename: "vol_volume_10"
+      - kind: "lag"
+        source: "close"
+        periods: 1
+        rename: "lag_close_1"
+  macro_augmented:
+    inherits: "basic_price"
+    description: "Adds slower momentum and spread-sensitive features."
+    features:
+      - kind: "ema"
+        source: "close"
+        span: 12
+        rename: "ema_close_12"
+      - kind: "ema"
+        source: "close"
+        span: 26
+        rename: "ema_close_26"
+      - kind: "pct_change"
+        source: "volume"
+        periods: 20
+        rename: "volume_return_20d"
+      - kind: "rolling_zscore"
+        source: "volume"
+        window: 20
+        rename: "zscore_volume_20"
+
+splits:
+  production_candidate:
+    train_start: "2018-01-01"
+    train_end: "2022-12-31"
+    validation_start: "2023-01-01"
+    validation_end: "2023-06-30"
+  recent_market:
+    train_start: "2019-01-01"
+    train_end: "2023-03-31"
+    validation_start: "2023-04-01"
+    validation_end: "2023-12-31"
+
+cross_validation:
+  frequency: "1D"
+  rolling_windows:
+    - name: "1yr_train_3mo_val"
+      training_days: 252
+      validation_days: 63
+      step_days: 21
+      min_train_date: "2017-01-01"
+    - name: "2yr_train_6mo_val"
+      training_days: 504
+      validation_days: 126
+      step_days: 42
+      min_train_date: "2016-01-01"
+
+mlflow:
+  experiment: "predictive_baselines"
+
+rl:
+  default_feature_set: "basic_price"
+  reward_definitions:
+    - name: "risk_adjusted"
+      kind: "risk_adjusted"
+      return_column: "future_return_1d"
+      transaction_cost: 0.0005
+      risk_penalty: 0.001
+    - name: "directional_accuracy"
+      kind: "directional"
+      return_column: "future_return_1d"
+      positive_reward: 1.0
+      negative_reward: -1.0
+  hyperparameters:
+    learning_rate: [0.0005, 0.001]
+    gamma: [0.90, 0.95]
+    entropy_coef: [0.0, 0.01]
+  episode_length: 63
+  evaluation_episodes: 25
