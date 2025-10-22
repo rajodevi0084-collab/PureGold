@@ -23,7 +23,7 @@ build-backend = "setuptools.build_meta"
 package-dir = {"" = "."}
 
 [tool.setuptools.packages.find]
-include = ["data_pipeline*"]
+include = ["data_pipeline*", "data_quality*"]
 
 [dependency-groups]
 dev = [
