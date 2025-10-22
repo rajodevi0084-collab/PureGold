@@ -1,0 +1,27 @@
+# Tuned configuration aligning with WAL, cache, and shard guidance from the dossier.
+[storage]
+  # Delay WAL fsyncs slightly to batch disk writes while preserving durability guarantees.
+  wal-fsync-delay = "5s"
+  wal-max-concurrent-writes = 0
+  wal-max-write-delay = "200ms"
+  # Cache sizing tuned for ~32GB host with memory headroom for compaction bursts.
+  cache-snapshot-memory-size = 134217728
+  cache-snapshot-write-cold-duration = "10m"
+  cache-max-memory-size = 268435456
+  series-file-max-concurrent-compactions = 4
+  compact-full-write-cold-duration = "4h"
+
+[data]
+  max-concurrent-compactions = 4
+  trace-logging-enabled = false
+
+[shard-precreation]
+  check-interval = "10m"
+  advance-period = "30m"
+
+[coordinator]
+  log-queries-after = "0s"
+  query-timeout = "0s"
+
+# Keep Flux log noise down during sustained load.
+flux-log-enabled = false
