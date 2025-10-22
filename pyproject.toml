@@ -1,0 +1,24 @@
+[project]
+name = "puregold"
+version = "0.1.0"
+description = "Data tooling stack aligned with Apple Silicon Day 1 decisions."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+authors = [
+  { name = "PureGold Team" }
+]
+dependencies = [
+  "polars==0.20.22",
+  "pyarrow==15.0.2",
+  "influxdb-client==1.43.0",
+  "uv==0.9.5"
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+  "ruff==0.5.6"
+]
